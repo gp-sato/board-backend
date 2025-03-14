@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\PostsRequest;
 use App\Models\Post;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class PostsController extends Controller
 {
@@ -14,27 +16,33 @@ class PostsController extends Controller
         return response($posts);
     }
 
-    public function store(Request $request)
+    public function store(PostsRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'description' => 'required|string|max:280',
-        ]);
-
         try {
             $post = new Post();
     
-            $post->name = $validated['name'];
+            $post->name = $request->name;
             $post->date = now();
-            $post->description = $validated['description'];
+            $post->description = $request->description;
     
             $post->save();
+
+            $post->date = $post->date->format('Y-m-d H:i:s');
+
+            return response()->json([
+                'status' => true,
+                'message' => '登録されました。',
+                'error' => null,
+                'data' => $post->only('id', 'name', 'date', 'description')
+            ], Response::HTTP_CREATED);
+
         } catch (\Exception $e) {
-            return response($e->getMessage(), 500);
+            return response()->json([
+                'status' => false,
+                'message' => '問題が発生しました。',
+                'errors' => null,
+                'data' => null
+            ] , Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        $posts = Post::select('id', 'name', 'date', 'description')->get();
-
-        return response($posts);
     }
 }
