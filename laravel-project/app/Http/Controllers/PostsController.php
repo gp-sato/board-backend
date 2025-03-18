@@ -32,7 +32,7 @@ class PostsController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => '登録されました。',
-                'error' => null,
+                'errors' => null,
                 'data' => $post->only('id', 'name', 'date', 'description')
             ], Response::HTTP_CREATED);
 
