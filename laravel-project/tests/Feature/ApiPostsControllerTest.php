@@ -6,7 +6,7 @@ use App\Models\Post;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -59,18 +59,20 @@ class ApiPostsControllerTest extends TestCase
             ['status', 'message', 'errors', 'data' => ['id', 'name', 'date', 'description']]
         );
 
+        // DB登録内容のアサーション
         $storeData = Post::latest()->orderBy('id', 'DESC')->first();
         $this->assertEquals($postData['name'], $storeData->name);
         $this->assertEquals(now(), $storeData->date);
         $this->assertEquals($postData['description'], $storeData->description);
 
-        $this->assertTrue($response['status']);
-        $this->assertEquals('登録されました。', $response['message']);
-        $this->assertNull($response['errors']);
-        $this->assertEquals($storeData->id, $response['data']['id']);
-        $this->assertEquals($storeData->name, $response['data']['name']);
-        $this->assertEquals($storeData->date, $response['data']['date']);
-        $this->assertEquals($storeData->description, $response['data']['description']);
+        // レスポンス内容のアサーション
+        $this->assertTrue($response->json('status'));
+        $this->assertEquals('登録されました。', $response->json('message'));
+        $this->assertNull($response->json('errors'));
+        $this->assertEquals($storeData->id, $response->json('data.id'));
+        $this->assertEquals($storeData->name, $response->json('data.name'));
+        $this->assertEquals($storeData->date, $response->json('data.date'));
+        $this->assertEquals($storeData->description, $response->json('data.description'));
     }
 
     public function test_バリデーションエラー_名前なし(): void
@@ -81,14 +83,7 @@ class ApiPostsControllerTest extends TestCase
 
         $response = $this->post('/api/posts', $postData);
 
-        $response->assertStatus(422);
-        $response->assertJsonStructure(
-            ['status', 'message', 'errors', 'data']
-        );
-        $this->assertFalse($response['status']);
-        $this->assertEquals('バリデーションエラーです。', $response['message']);
-        $this->assertNotNull($response['errors']);
-        $this->assertNull($response['data']);
+        $this->assertValidationErrorResponse($response);
 
         $this->assertEquals(self::RECORDS, Post::count());
     }
@@ -101,14 +96,7 @@ class ApiPostsControllerTest extends TestCase
 
         $response = $this->post('/api/posts', $postData);
 
-        $response->assertStatus(422);
-        $response->assertJsonStructure(
-            ['status', 'message', 'errors', 'data']
-        );
-        $this->assertFalse($response['status']);
-        $this->assertEquals('バリデーションエラーです。', $response['message']);
-        $this->assertNotNull($response['errors']);
-        $this->assertNull($response['data']);
+        $this->assertValidationErrorResponse($response);
 
         $this->assertEquals(self::RECORDS, Post::count());
     }
@@ -121,14 +109,7 @@ class ApiPostsControllerTest extends TestCase
 
         $response = $this->post('/api/posts', $postData);
 
-        $response->assertStatus(422);
-        $response->assertJsonStructure(
-            ['status', 'message', 'errors', 'data']
-        );
-        $this->assertFalse($response['status']);
-        $this->assertEquals('バリデーションエラーです。', $response['message']);
-        $this->assertNotNull($response['errors']);
-        $this->assertNull($response['data']);
+        $this->assertValidationErrorResponse($response);
 
         $this->assertEquals(self::RECORDS, Post::count());
     }
@@ -141,25 +122,17 @@ class ApiPostsControllerTest extends TestCase
 
         $response = $this->post('/api/posts', $postData);
 
-        $response->assertStatus(422);
-        $response->assertJsonStructure(
-            ['status', 'message', 'errors', 'data']
-        );
-        $this->assertFalse($response['status']);
-        $this->assertEquals('バリデーションエラーです。', $response['message']);
-        $this->assertNotNull($response['errors']);
-        $this->assertNull($response['data']);
+        $this->assertValidationErrorResponse($response);
 
         $this->assertEquals(self::RECORDS, Post::count());
     }
 
     public function test_DBアクセスエラー(): void
     {
-        config([
-            'database.connections.sqlite.host' => 'invalid-host',
-        ]);
-
-        DB::purge('sqlite');
+        // テスト用のLaravelイベントリスナーを追加
+        Event::listen('eloquent.saving: ' . Post::class, function () {
+            throw new \PDOException('Database error');
+        });
 
         $postData = $this->baseData;
 
@@ -169,9 +142,21 @@ class ApiPostsControllerTest extends TestCase
         $response->assertJsonStructure(
             ['status', 'message', 'errors', 'data']
         );
-        $this->assertFalse($response['status']);
-        $this->assertEquals('問題が発生しました。', $response['message']);
-        $this->assertNull($response['errors']);
-        $this->assertNull($response['data']);
+        $this->assertFalse($response->json('status'));
+        $this->assertEquals('問題が発生しました。', $response->json('message'));
+        $this->assertNull($response->json('errors'));
+        $this->assertNull($response->json('data'));
+    }
+
+    private function assertValidationErrorResponse($response): void
+    {
+        $response->assertStatus(422);
+        $response->assertJsonStructure(
+            ['status', 'message', 'errors', 'data']
+        );
+        $this->assertFalse($response->json('status'));
+        $this->assertEquals('バリデーションエラーです。', $response->json('message'));
+        $this->assertNotNull($response->json('errors'));
+        $this->assertNull($response->json('data'));
     }
 }
