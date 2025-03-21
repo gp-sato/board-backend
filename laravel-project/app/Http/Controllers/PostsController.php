@@ -11,7 +11,9 @@ class PostsController extends Controller
 {
     public function index()
     {
-        $posts = Post::select('id', 'name', 'date', 'description')->get();
+        $posts = Post::select('id', 'name', 'date', 'description')
+            ->orderBy('date', 'DESC')
+            ->get();
 
         return response($posts);
     }
