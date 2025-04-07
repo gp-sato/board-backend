@@ -36,7 +36,6 @@ class PostsController extends Controller
                 'status' => true,
                 'message' => '登録されました。',
                 'errors' => null,
-                'data' => null
             ], Response::HTTP_CREATED);
 
         } catch (\Exception $e) {
@@ -44,7 +43,6 @@ class PostsController extends Controller
                 'status' => false,
                 'message' => '問題が発生しました。',
                 'errors' => null,
-                'data' => null
             ] , Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
