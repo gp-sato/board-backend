@@ -48,8 +48,9 @@
 次のコマンドを実行して、サービスを起動する。<br>
 `/var/www/laravel-project$ php artisan reverb:start`
 
-サービスが動いているかはブラウザで`http:localhost:8000`にアクセスしてください。<br>
-メールは`http:localhost:8025`で表示します。
+サービスが動いているかはブラウザで http://localhost:8000 にアクセスしてください。<br>
+http://localhost:8080 にアクセスして Not found. が返ってくればリアルタイム通信が機能しています。<br>
+メールは http://localhost:8025 で表示します。
 
 # システムの削除
 
