@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageEvent;
 use App\Http\Requests\PostsRequest;
 use App\Models\Post;
 use Illuminate\Http\Request;
@@ -22,20 +23,19 @@ class PostsController extends Controller
     {
         try {
             $post = new Post();
-    
+
             $post->name = $request->name;
             $post->date = now();
             $post->description = $request->description;
-    
+
             $post->save();
 
-            $post->date = $post->date->format('Y-m-d H:i:s');
+            event(new MessageEvent($post));
 
             return response()->json([
                 'status' => true,
                 'message' => '登録されました。',
                 'errors' => null,
-                'data' => $post->only('id', 'name', 'date', 'description')
             ], Response::HTTP_CREATED);
 
         } catch (\Exception $e) {
@@ -43,7 +43,6 @@ class PostsController extends Controller
                 'status' => false,
                 'message' => '問題が発生しました。',
                 'errors' => null,
-                'data' => null
             ] , Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }

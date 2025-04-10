@@ -50,13 +50,15 @@ class ApiPostsControllerTest extends TestCase
 
     public function test_投稿成功(): void
     {
+        Event::fake();
+
         $postData = $this->baseData;
 
         $response = $this->post('/api/posts', $postData);
 
         $response->assertStatus(201);
         $response->assertJsonStructure(
-            ['status', 'message', 'errors', 'data' => ['id', 'name', 'date', 'description']]
+            ['status', 'message', 'errors']
         );
 
         // DB登録内容のアサーション
@@ -69,10 +71,6 @@ class ApiPostsControllerTest extends TestCase
         $this->assertTrue($response->json('status'));
         $this->assertEquals('登録されました。', $response->json('message'));
         $this->assertNull($response->json('errors'));
-        $this->assertEquals($storeData->id, $response->json('data.id'));
-        $this->assertEquals($storeData->name, $response->json('data.name'));
-        $this->assertEquals($storeData->date, $response->json('data.date'));
-        $this->assertEquals($storeData->description, $response->json('data.description'));
     }
 
     public function test_バリデーションエラー_名前なし(): void
@@ -140,23 +138,21 @@ class ApiPostsControllerTest extends TestCase
 
         $response->assertStatus(500);
         $response->assertJsonStructure(
-            ['status', 'message', 'errors', 'data']
+            ['status', 'message', 'errors']
         );
         $this->assertFalse($response->json('status'));
         $this->assertEquals('問題が発生しました。', $response->json('message'));
         $this->assertNull($response->json('errors'));
-        $this->assertNull($response->json('data'));
     }
 
     private function assertValidationErrorResponse($response): void
     {
         $response->assertStatus(422);
         $response->assertJsonStructure(
-            ['status', 'message', 'errors', 'data']
+            ['status', 'message', 'errors']
         );
         $this->assertFalse($response->json('status'));
         $this->assertEquals('バリデーションエラーです。', $response->json('message'));
         $this->assertNotNull($response->json('errors'));
-        $this->assertNull($response->json('data'));
     }
 }

@@ -39,7 +39,6 @@ class PostsRequest extends FormRequest
             'status' => false,
             'message' => 'バリデーションエラーです。',
             'errors' => $validator->errors(),
-            'data' => null
         ], Response::HTTP_UNPROCESSABLE_ENTITY));
     }
 }
